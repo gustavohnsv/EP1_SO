@@ -93,5 +93,5 @@ sys_uptime(void)
 int
 sys_getreadcount(void)
 {
-  return myproc()->reads;
+  return global_reads;
 }

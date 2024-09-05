@@ -16,8 +16,6 @@
 #include "file.h"
 #include "fcntl.h"
 
-static int global_reads = 0;
-
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
 static int
@@ -71,11 +69,10 @@ sys_dup(void)
 int
 sys_read(void)
 {
-
+  
   acquire(&readlock);
-  myproc()->reads = global_reads++;
+  myproc()->reads = ++global_reads;
   release(&readlock);
-
 
   struct file *f;
   int n;

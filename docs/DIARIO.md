@@ -84,3 +84,40 @@ Adicionei o arquivo de teste chamado `test_1.c` para testar se a função está 
 ```  
 
 Modifiquei para o incremento ser realizado na chamada `sys_read()` e a chamada `sys_getreadcount()` apenas exibe o contador.
+
+# Dia 04/09/2024
+
+Esqueci de documentar no dia anterior, mas a modificação feita na chamada foi:
+
+```
+    ..arquivo sysfile.c
+    myproc()->reads++;
+```
+
+Dessa forma, conferi com o ChatGPT (uma fonte não muito confiável), para ver se o novo resultado fazia um pouco de sentido e obtive a seguinte resposta ao executar o teste (A saída esperada por ele e a saída do programa coincidiram):
+
+> Nota pessoal: Percebi só depois de baixar o segundo teste que as saídas esperadas estavam no próprio arquivo (Bem atento!)
+
+```
+    ..saída do xv6
+    $ test_1
+    XV6_TEST_OUTPUT 0 1 1000
+```
+
+Agora adicionei o arquivo de teste chamado `test_2.c` para testar se a função continua funcionando ou precisa de modificações no que se trata da lógica, e o resultado foi:
+
+```
+    ..saída do xv6
+    $ test_2
+    XV6_TEST_OUTPUT 100000
+```
+
+Como esperado, a saída não condizia, pois o programa fazia um *fork* e cada *reads* estava sendo armazenado em cada processo, ao invés de estar sendo compartilhado. Uma maneira simples de resolver esse problema é introduzido cuidadosamente uma variável global que será acessada por qualquer processo.
+
+> Nota pessoal: Estou fazendo testes, criando uma varíavel global `static int global_reads` e começando a partir do `0`, mas as saídas tanto do primeiro quanto do segundo teste começaram a divergir das saídas esperadas. Estou tentando "transformar" as leituras de cada processo em algo global, usando locks para evitar de dois ou mais processos mexerem na mesma varíavel ao mesmo tempo.
+
+> Nota pessoal 2: Consegui implementar uma espécie de lock para quando a chamada `sys_read` fosse feita, mas não sei ao certo se ainda está funcionando. Adicionando alguns `cprintf()` para verificar as leituras que eram feitas, pude perceber que quando eu executava um comando, ele começava uma outra contagem e depois voltava. Eu testei com a chamada `ls`, então creio que o xv6 está criando um outro processo para essa chamada, começando uma outra contagem do 0, e quando a chamada termina, ele volta para o processo em que eu estava
+
+> Nota pessoal 3: Eu rodei tanto o primeiro teste quanto outro chamado `zombie`, e percebi que um criava um novo processo para ser executado enquanto outro não, respectivamente. Percebi também que alguns *reads* são feitos antes de executar qualquer coisa de fato
+
+> Nota pessoal 4: Não consegui resolver o problema, aparentemente ainda está havendo concorrência entre os processos, o `global_reads` não é atualizado da forma que deveria. Tentarei usar alguma ferramente de depuração para acompanhar o programa ou tentarei de algum jeito ou guardar as leituras em outro local que não seja dentro do processo (de uma maneira mais global do que atualmente), ou então tentar resolver essa questão do compartilhamento de chamadas globais em cada processo separadamente
